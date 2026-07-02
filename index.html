@@ -184,9 +184,9 @@
 
     .hero h1 {
       font-family: 'Poiret One', 'Cinzel', serif;
-      font-size: clamp(2.8rem, 7.5vw, 6rem);
+      font-size: clamp(1.8rem, 5vw, 3.6rem);
       font-weight: 400;
-      letter-spacing: .22em;
+      letter-spacing: .10em;
       text-transform: uppercase;
       line-height: 1.05;
       margin-bottom: .5rem;
@@ -850,6 +850,16 @@
       .features-grid { grid-template-columns: 1fr; }
       .infos-grid    { grid-template-columns: 1fr 1fr; }
       .nav-links     { display: none; }
+
+      /* ── Hero mobile ── */
+      .hero h1 {
+        font-size: clamp(1.6rem, 8.5vw, 2.4rem);
+        letter-spacing: .06em;
+        word-break: keep-all;
+      }
+      .hero-title-deco { width: 100%; overflow: hidden; }
+      .hero { padding: 6rem 1rem 4rem; overflow-x: hidden; }
+      .hero-content { width: 100%; max-width: 100%; padding: 0 .5rem; box-sizing: border-box; }
     }
   
     /* ── TARIFS ACCORDION ── */
