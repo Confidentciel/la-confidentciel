@@ -1309,6 +1309,18 @@
   text-transform:uppercase; text-decoration:none; transition:all .3s;
 }
 .bk-btn-pay:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(201,164,32,.5); }
+.bk-btn-caution {
+  display:block; width:100%; text-align:center;
+  background:transparent; border:1.5px solid rgba(201,164,32,.45);
+  color:var(--gold-light); padding:.85rem 2rem; border-radius:2rem;
+  cursor:pointer; font-size:.88rem; font-weight:600; letter-spacing:.06em;
+  text-decoration:none; transition:all .3s; margin-top:.7rem;
+}
+.bk-btn-caution:hover { border-color:var(--gold); color:var(--gold); }
+.bk-two-steps {
+  font-size:.78rem; color:var(--gold-light); opacity:.7;
+  text-align:center; margin-bottom:1rem; line-height:1.6;
+}
 @media(max-width:580px){
   .booking-modal { padding:2rem 1.1rem; }
   .bk-day-grid { grid-template-columns:1fr; }
@@ -2592,7 +2604,9 @@ av-logo" href="#">La ConfidentCiel</a>
     <div class="bk-step" id="bks4">
       <p class="bk-step-title">Récapitulatif</p>
       <div class="bk-summary-lines" id="bkSummary"></div>
-      <a class="bk-btn-pay" id="bkBtnPay" href="#" target="_blank">✦ Réserver &amp; Payer en ligne</a>
+      <p class="bk-two-steps">Deux étapes à effectuer pour finaliser votre réservation :</p>
+      <a class="bk-btn-pay" id="bkBtnPay" href="#" target="_blank">✦ Étape 1 — Payer la prestation</a>
+      <a class="bk-btn-caution" id="bkBtnCaution" href="#" target="_blank">🔒 Étape 2 — Enregistrer ma carte (caution 300 €)</a>
       <div class="bk-nav" style="margin-top:1rem">
         <button class="bk-btn-prev" onclick="bkGoStep(3)">← Modifier</button>
       </div>
@@ -2602,7 +2616,10 @@ av-logo" href="#">La ConfidentCiel</a>
 
 <script>
 (function(){
-  // ─── Stripe Payment Links (à configurer après création des liens) ───
+  // ─── URL page caution Netlify ────────────────────────────────────────
+  var CAUTION_URL = 'https://lcc-caution.netlify.app';
+
+  // ─── Stripe Payment Links ────────────────────────────────────────────
   var STRIPE = {
     nuit_170: 'https://buy.stripe.com/test_7sY8wQ1m6411euR5iC4ko00',
     nuit_180: 'https://buy.stripe.com/test_8x214o5Cm00PgCZeTc4ko01',
@@ -2711,10 +2728,15 @@ av-logo" href="#">La ConfidentCiel</a>
     if(bk.opts.anniversaire){ addLine(c,'🎂 Pack Décoration Anniversaire','+50 €',''); optTotal+=50; }
     if(bk.opts.arrivee){ addLine(c,'⏰ Arrivée anticipée','+50 €',''); optTotal+=50; }
     if(bk.opts.depart){ addLine(c,'🕐 Départ tardif','+50 €',''); optTotal+=50; }
-    addLine(c,'🔒 Caution (remboursable)','300 €','muted');
-    addLine(c,'Total à régler',(bk.price+optTotal+300)+' €','total');
+    addLine(c,'🔒 Caution','300 € · empreinte carte (non débitée)','muted');
+    addLine(c,'Total prélevé maintenant',(bk.price+optTotal)+' €','total');
     // Set pay link
     document.getElementById('bkBtnPay').href = bkGetLink();
+    // Set caution link
+    var offerLabels = {nuit:'Escapade en Amoureux',journee:'Suite & Spa 3h',pyjama:'Soirée Pyjama Party'};
+    var cautionRef = 'LCC' + Date.now();
+    document.getElementById('bkBtnCaution').href =
+      CAUTION_URL + '/?ref=' + cautionRef + '&offer=' + encodeURIComponent(offerLabels[bk.offer]||'');
   }
 
   function addLine(parent, label, amount, cls) {
