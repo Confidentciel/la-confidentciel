@@ -1383,12 +1383,12 @@
 .bk-btn-pay:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(201,164,32,.5); }
 .bk-btn-caution {
   display:block; width:100%; text-align:center;
-  background:transparent; border:1.5px solid rgba(201,164,32,.45);
-  color:var(--gold-light); padding:.85rem 2rem; border-radius:2rem;
-  cursor:pointer; font-size:.88rem; font-weight:600; letter-spacing:.06em;
-  text-decoration:none; transition:all .3s; margin-top:.7rem;
+  background:linear-gradient(135deg,#b8920e,var(--gold));
+  border:none; color:#080c2a; padding:1rem 2rem; border-radius:2rem;
+  cursor:pointer; font-size:.95rem; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; text-decoration:none; transition:all .3s;
 }
-.bk-btn-caution:hover { border-color:var(--gold); color:var(--gold); }
+.bk-btn-caution:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(201,164,32,.5); }
 .bk-two-steps {
   font-size:.78rem; color:var(--gold-light); opacity:.7;
   text-align:center; margin-bottom:1rem; line-height:1.6;
@@ -2714,9 +2714,8 @@ av-logo" href="#">La ConfidentCiel</a>
     <div class="bk-step" id="bks4">
       <p class="bk-step-title">Récapitulatif</p>
       <div class="bk-summary-lines" id="bkSummary"></div>
-      <p class="bk-two-steps">Deux étapes à effectuer pour finaliser votre réservation :</p>
-      <a class="bk-btn-pay" id="bkBtnPay" href="#" target="_blank">✦ Étape 1 — Payer la prestation</a>
-      <a class="bk-btn-caution" id="bkBtnCaution" href="#" target="_blank">🔒 Étape 2 — Enregistrer ma carte (caution 300 €)</a>
+      <a class="bk-btn-caution" id="bkBtnCaution" href="#" target="_blank">✦ Finaliser ma réservation →</a>
+      <p class="bk-two-steps" style="margin-top:.8rem">🔒 Votre carte sera enregistrée en caution (300 €, non débitée),<br>puis vous serez redirigé vers le paiement de la prestation.</p>
       <div class="bk-nav" style="margin-top:1rem">
         <button class="bk-btn-prev" onclick="bkGoStep(3)">← Modifier</button>
       </div>
@@ -2731,15 +2730,15 @@ av-logo" href="#">La ConfidentCiel</a>
 
   // ─── Stripe Payment Links ────────────────────────────────────────────
   var STRIPE = {
-    nuit_170: 'https://buy.stripe.com/test_7sY8wQ1m6411euR5iC4ko00',
-    nuit_180: 'https://buy.stripe.com/test_8x214o5Cm00PgCZeTc4ko01',
-    nuit_200: 'https://buy.stripe.com/test_bJe28sc0K9llcmJdP84ko02',
-    nuit_240: 'https://buy.stripe.com/test_28EcN6fcW9ll9ax3au4ko03',
-    journee:  'https://buy.stripe.com/test_7sYfZi3uefJJgCZ12m4ko04',
-    pyjama_3: 'https://buy.stripe.com/test_eVq5kEe8S2WXdqN8uO4ko05',
-    pyjama_4: 'https://buy.stripe.com/test_7sYaEYd4O41172p3au4ko06',
-    pyjama_5: 'https://buy.stripe.com/test_cNiaEYgh09lllfyV7qK4ko07',
-    pyjama_6: 'https://buy.stripe.com/test_fZueVefcW699aeB6mG4ko08'
+    nuit_170: 'https://buy.stripe.com/test_eVq4gAe8S4111I59yS4ko0i',
+    nuit_180: 'https://buy.stripe.com/test_14A00kgh0dBBfyV12m4ko0j',
+    nuit_200: 'https://buy.stripe.com/test_28E4gAfcW8hh5YleTc4ko0k',
+    nuit_240: 'https://buy.stripe.com/test_14A6oIaWI1ST5YlfXg4ko0l',
+    journee:  'https://buy.stripe.com/test_14A9AUe8Scxx4Uh7qK4ko0m',
+    pyjama_3: 'https://buy.stripe.com/test_7sY3cwc0Kcxx5Yl3au4ko0n',
+    pyjama_4: 'https://buy.stripe.com/test_7sY3cwfcWgNN0E14ey4ko0o',
+    pyjama_5: 'https://buy.stripe.com/test_fZufZi2qaeFF72peTc4ko0p',
+    pyjama_6: 'https://buy.stripe.com/test_5kQaEY2qaeFFcmJbH04ko0q'
   };
 
   var bk = { offer:null, price:0, dayKey:null, qty:4,
@@ -2971,14 +2970,15 @@ av-logo" href="#">La ConfidentCiel</a>
     if(bk.opts.arrivee){ addLine(c,'⏰ Arrivée anticipée','+50 €',''); optTotal+=50; }
     if(bk.opts.depart){ addLine(c,'🕐 Départ tardif','+50 €',''); optTotal+=50; }
     addLine(c,'🔒 Caution','300 € · empreinte carte (non débitée)','muted');
-    addLine(c,'Total prélevé maintenant',(bk.price+optTotal)+' €','total');
-    // Set pay link
-    document.getElementById('bkBtnPay').href = bkGetLink();
-    // Set caution link
+    addLine(c,'Total prestation',(bk.price+optTotal)+' €','total');
+    // Bouton unique : caution d'abord → redirection automatique vers paiement
     var offerLabels = {nuit:'Escapade en Amoureux',journee:'Suite & Spa 3h',pyjama:'Soirée Pyjama Party'};
     var cautionRef = 'LCC' + Date.now();
+    var payUrl = bkGetLink();
     document.getElementById('bkBtnCaution').href =
-      CAUTION_URL + '/?ref=' + cautionRef + '&offer=' + encodeURIComponent(offerLabels[bk.offer]||'');
+      CAUTION_URL + '/?ref=' + cautionRef +
+      '&offer=' + encodeURIComponent(offerLabels[bk.offer]||'') +
+      '&pay_url=' + encodeURIComponent(payUrl);
   }
 
   function addLine(parent, label, amount, cls) {
