@@ -1125,6 +1125,78 @@
   from { opacity:0; transform:translateY(6px); }
   to   { opacity:1; transform:translateY(0); }
 }
+/* ── Calendar widget ── */
+.bk-cal-loading { text-align:center; padding:2rem 0; }
+.bk-cal-spinner {
+  width:36px; height:36px; margin:0 auto .8rem;
+  border:3px solid rgba(201,164,32,.2); border-top-color:var(--gold);
+  border-radius:50%; animation: bkSpin .8s linear infinite;
+}
+@keyframes bkSpin { to { transform:rotate(360deg); } }
+.bk-cal-loading p { font-size:.85rem; opacity:.65; }
+.bk-cal-nav {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:.9rem;
+}
+.bk-cal-nav button {
+  background:none; border:none; color:var(--gold);
+  font-size:1.3rem; cursor:pointer; padding:.2rem .6rem;
+  border-radius:6px; transition:background .2s;
+}
+.bk-cal-nav button:hover { background:rgba(201,164,32,.12); }
+.bk-cal-nav span {
+  font-family:'Poiret One',serif; font-size:.9rem;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--gold-light);
+}
+.bk-cal-weekdays {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  margin-bottom:.35rem; text-align:center;
+}
+.bk-cal-weekdays span { font-size:.65rem; color:var(--text-muted); padding:.2rem 0; }
+.bk-cal-grid {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:3px;
+  margin-bottom:.9rem;
+}
+.bk-cal-day {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  border-radius:6px; font-size:.8rem; cursor:default;
+}
+.bk-cal-day.empty { background:transparent; }
+.bk-cal-day.past  { color:rgba(255,255,255,.2); }
+.bk-cal-day.avail {
+  background:rgba(201,164,32,.1); color:var(--gold-light);
+  cursor:pointer; border:1px solid rgba(201,164,32,.25); transition:all .18s;
+}
+.bk-cal-day.avail:hover,.bk-cal-day.avail.selected {
+  background:var(--gold); color:#080c2a; font-weight:700;
+}
+.bk-cal-day.partial {
+  background:rgba(92,45,138,.15); color:#c8a8f0;
+  cursor:pointer; border:1px solid rgba(92,45,138,.3); transition:all .18s;
+}
+.bk-cal-day.partial:hover,.bk-cal-day.partial.selected {
+  background:rgba(92,45,138,.4); color:#fff; font-weight:700;
+}
+.bk-cal-day.blocked { background:rgba(255,255,255,.04); color:rgba(255,255,255,.2); }
+.bk-cal-legend {
+  display:flex; gap:.8rem; justify-content:center;
+  font-size:.7rem; color:var(--text-muted); flex-wrap:wrap;
+}
+.bk-cal-legend .bk-leg { font-size:.85rem; }
+.bk-cal-legend .bk-leg.avail    { color:var(--gold); }
+.bk-cal-legend .bk-leg.partial  { color:#c8a8f0; }
+.bk-cal-legend .bk-leg.blocked  { color:rgba(255,255,255,.2); }
+.bk-cal-error { text-align:center; padding:1.5rem 0; font-size:.85rem; color:var(--text-muted); }
+.bk-cal-error button {
+  margin-top:.7rem; background:none; border:1px solid var(--gold);
+  color:var(--gold); padding:.4rem 1rem; border-radius:20px; cursor:pointer;
+}
+.bk-offer-card.bk-offer-disabled { opacity:.3; cursor:not-allowed; pointer-events:none; }
+.bk-date-badge {
+  text-align:center; font-size:.78rem; color:var(--gold-light);
+  margin-bottom:.6rem; opacity:.8;
+}
+.bk-date-badge.partial-note { color:#c8a8f0; }
 .bk-step-title {
   font-family: 'Poiret One',serif;
   font-size: 1rem;
@@ -2455,7 +2527,8 @@ av-logo" href="#">La ConfidentCiel</a>
     <div class="booking-header">
       <h2>Réservation</h2>
       <div class="bk-steps-bar">
-        <div class="bk-dot on" id="bkd1"></div>
+        <div class="bk-dot on" id="bkd0"></div>
+        <div class="bk-dot" id="bkd1"></div>
         <div class="bk-dot" id="bkd2"></div>
         <div class="bk-dot" id="bkd3"></div>
         <div class="bk-dot" id="bkd4"></div>
@@ -2463,8 +2536,45 @@ av-logo" href="#">La ConfidentCiel</a>
     </div>
 
     <!-- ÉTAPE 1 : Choix de l'offre -->
-    <div class="bk-step on" id="bks1">
+    <!-- ── Étape 0 : Calendrier de disponibilité ── -->
+    <div class="bk-step on" id="bks0">
+      <p class="bk-step-title">Choisissez votre date</p>
+      <div class="bk-cal-wrap">
+        <div id="bkCalLoading" class="bk-cal-loading">
+          <div class="bk-cal-spinner"></div>
+          <p>Vérification des disponibilités…</p>
+        </div>
+        <div id="bkCalContent" style="display:none">
+          <div class="bk-cal-nav">
+            <button onclick="bkCalPrev()">‹</button>
+            <span id="bkCalMonthLabel"></span>
+            <button onclick="bkCalNext()">›</button>
+          </div>
+          <div class="bk-cal-weekdays">
+            <span>Lun</span><span>Mar</span><span>Mer</span>
+            <span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+          </div>
+          <div class="bk-cal-grid" id="bkCalGrid"></div>
+          <div class="bk-cal-legend">
+            <span class="bk-leg avail">●</span> Disponible &nbsp;
+            <span class="bk-leg partial">●</span> Journée uniquement &nbsp;
+            <span class="bk-leg blocked">●</span> Indisponible
+          </div>
+        </div>
+        <div id="bkCalError" class="bk-cal-error" style="display:none">
+          <p>Impossible de charger les disponibilités.</p>
+          <button onclick="bkCalFetch()">Réessayer</button>
+        </div>
+      </div>
+      <div class="bk-nav" style="margin-top:1rem">
+        <span></span>
+        <button class="bk-btn-next" id="bkn0" onclick="bkGoStep(1)" disabled>Continuer →</button>
+      </div>
+    </div>
+
+    <div class="bk-step" id="bks1">
       <p class="bk-step-title">Quelle expérience ?</p>
+      <div id="bkDateBadge" class="bk-date-badge" style="display:none"></div>
       <div class="bk-offer-grid">
         <div class="bk-offer-card" id="bkc-nuit" onclick="bkSelectOffer('nuit')">
           <div class="bk-offer-icon">💑</div>
@@ -2633,15 +2743,114 @@ av-logo" href="#">La ConfidentCiel</a>
   };
 
   var bk = { offer:null, price:0, dayKey:null, qty:4,
+             date:null, dateState:null, _preset:null,
              opts:{romantique:false,anniversaire:false,arrivee:false,depart:false} };
 
   var PYJAMA_RATES = {3:90,4:85,5:80,6:75,7:75,8:75};
 
+  // ── Availability calendar ───────────────────────────────────────────────
+  var bkAvailData = null; // null=not loaded, 'loading'=in flight, Set=ready
+  var bkCalYear, bkCalMonth;
+
+  function bkYMD(d) {
+    return d.getUTCFullYear() + '-' +
+      String(d.getUTCMonth()+1).padStart(2,'0') + '-' +
+      String(d.getUTCDate()).padStart(2,'0');
+  }
+
+  window.bkCalFetch = function() {
+    bkAvailData = 'loading';
+    document.getElementById('bkCalLoading').style.display = '';
+    document.getElementById('bkCalContent').style.display = 'none';
+    document.getElementById('bkCalError').style.display = 'none';
+    fetch(CAUTION_URL + '/.netlify/functions/get-availability')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.error) throw new Error(data.error);
+        bkAvailData = new Set(data.blocked);
+        document.getElementById('bkCalLoading').style.display = 'none';
+        document.getElementById('bkCalContent').style.display = '';
+        bkCalRender();
+      })
+      .catch(function(){
+        bkAvailData = null;
+        document.getElementById('bkCalLoading').style.display = 'none';
+        document.getElementById('bkCalError').style.display = '';
+      });
+  };
+
+  function bkDateAvail(ymd) {
+    // 'avail' = both slots free, 'partial' = journée only, 'blocked' = fully blocked
+    var nuiteeBlocked = bkAvailData instanceof Set && bkAvailData.has(ymd);
+    var d = new Date(ymd + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() - 1);
+    var prevBlocked = bkAvailData instanceof Set && bkAvailData.has(bkYMD(d));
+    if(nuiteeBlocked && prevBlocked) return 'blocked';
+    if(nuiteeBlocked) return 'partial';
+    return 'avail';
+  }
+
+  function bkCalRender() {
+    var now = new Date();
+    var todayYMD = bkYMD(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())));
+    var MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                     'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    document.getElementById('bkCalMonthLabel').textContent =
+      MONTHS_FR[bkCalMonth] + ' ' + bkCalYear;
+    var grid = document.getElementById('bkCalGrid');
+    grid.innerHTML = '';
+    var firstDow = (new Date(Date.UTC(bkCalYear, bkCalMonth, 1)).getUTCDay() + 6) % 7;
+    var daysInMonth = new Date(Date.UTC(bkCalYear, bkCalMonth + 1, 0)).getUTCDate();
+    for(var e = 0; e < firstDow; e++) {
+      var emp = document.createElement('div');
+      emp.className = 'bk-cal-day empty'; grid.appendChild(emp);
+    }
+    for(var day = 1; day <= daysInMonth; day++) {
+      var ymd = bkCalYear + '-' + String(bkCalMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      var isPast = ymd <= todayYMD;
+      var state = isPast ? 'past' : bkDateAvail(ymd);
+      var cell = document.createElement('div');
+      cell.className = 'bk-cal-day ' + state;
+      if(bk.date === ymd) cell.className += ' selected';
+      cell.textContent = day;
+      if(!isPast && state !== 'blocked') {
+        (function(y, s, c) {
+          c.onclick = function() {
+            document.querySelectorAll('.bk-cal-day.selected').forEach(function(x){ x.classList.remove('selected'); });
+            c.classList.add('selected');
+            bk.date = y; bk.dateState = s;
+            document.getElementById('bkn0').disabled = false;
+          };
+        })(ymd, state, cell);
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  window.bkCalPrev = function() {
+    bkCalMonth--; if(bkCalMonth < 0){ bkCalMonth = 11; bkCalYear--; } bkCalRender();
+  };
+  window.bkCalNext = function() {
+    bkCalMonth++; if(bkCalMonth > 11){ bkCalMonth = 0; bkCalYear++; } bkCalRender();
+  };
+
+  function bkFormatDate(ymd) {
+    var p = ymd.split('-');
+    var d = new Date(Date.UTC(+p[0], +p[1]-1, +p[2]));
+    var J = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    var M = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+    return J[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + M[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+  }
+  // ── End availability calendar ───────────────────────────────────────────
+
   window.bkOpen = function(preset) {
     bkReset();
+    bk._preset = preset || null;
     document.getElementById('bkOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
-    if (preset) { bkSelectOffer(preset); if(preset!=='nuit') bkGoStep(2); }
+    // Fetch availability if not already done
+    if(!(bkAvailData instanceof Set)) bkCalFetch();
+    else bkCalRender();
   };
 
   window.bkClose = function() {
@@ -2651,25 +2860,57 @@ av-logo" href="#">La ConfidentCiel</a>
 
   function bkReset() {
     bk = { offer:null, price:0, dayKey:null, qty:4,
+           date:null, dateState:null, _preset:null,
            opts:{romantique:false,anniversaire:false,arrivee:false,depart:false} };
-    document.querySelectorAll('.bk-offer-card.sel,.bk-day-card.sel,.bk-opt.sel')
-      .forEach(function(e){ e.classList.remove('sel'); });
+    document.querySelectorAll('.bk-offer-card.sel,.bk-day-card.sel,.bk-opt.sel,.bk-cal-day.selected')
+      .forEach(function(e){ e.classList.remove('sel','selected'); });
+    document.getElementById('bkn0').disabled = true;
     document.getElementById('bkn1').disabled = true;
     document.getElementById('bkn2').disabled = true;
-    bkGoStep(1);
+    bkGoStep(0);
   }
 
   window.bkGoStep = function(n) {
     document.querySelectorAll('.bk-step').forEach(function(s){ s.classList.remove('on'); });
     document.getElementById('bks'+n).classList.add('on');
-    [1,2,3,4].forEach(function(i){
+    [0,1,2,3,4].forEach(function(i){
       document.getElementById('bkd'+i).classList.toggle('on', i<=n);
     });
+    // Apply preset after calendar: auto-select offer and jump to step 2
+    if(n===1) {
+      bkShowStep1();
+      if(bk._preset) {
+        var p = bk._preset; bk._preset = null;
+        if(!(p==='nuit'||p==='pyjama') || bk.dateState !== 'partial') {
+          bkSelectOffer(p);
+          if(p !== 'nuit') { bkGoStep(2); return; }
+        }
+      }
+    }
     if(n===2) bkShowStep2();
     if(n===4) bkBuildSummary();
   };
 
+  function bkShowStep1() {
+    // Grey out nuit/pyjama if date only allows journée
+    var partial = bk.dateState === 'partial';
+    document.getElementById('bkc-nuit').classList.toggle('bk-offer-disabled', partial);
+    document.getElementById('bkc-pyjama').classList.toggle('bk-offer-disabled', partial);
+    // Show date badge
+    var badge = document.getElementById('bkDateBadge');
+    if(bk.date) {
+      badge.textContent = (partial ? '🌤 ' : '✦ ') + bkFormatDate(bk.date) +
+        (partial ? ' — Journée uniquement' : '');
+      badge.className = 'bk-date-badge' + (partial ? ' partial-note' : '');
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
   window.bkSelectOffer = function(type) {
+    // Block nuit/pyjama on partial (journée-only) dates
+    if(bk.dateState === 'partial' && (type === 'nuit' || type === 'pyjama')) return;
     bk.offer = type;
     document.querySelectorAll('.bk-offer-card').forEach(function(c){ c.classList.remove('sel'); });
     document.getElementById('bkc-'+type).classList.add('sel');
@@ -2723,6 +2964,7 @@ av-logo" href="#">La ConfidentCiel</a>
     c.innerHTML = '';
     var offerLabels = {nuit:'Escapade en Amoureux',journee:'Suite & Spa · 3h',pyjama:'Soirée Pyjama Party'};
     var optTotal = 0;
+    if(bk.date) addLine(c, '📅 Date', bkFormatDate(bk.date), '');
     addLine(c, offerLabels[bk.offer], bk.price+' €', '');
     if(bk.opts.romantique){ addLine(c,'🌹 Pack Décoration Romantique','+50 €',''); optTotal+=50; }
     if(bk.opts.anniversaire){ addLine(c,'🎂 Pack Décoration Anniversaire','+50 €',''); optTotal+=50; }
@@ -2758,6 +3000,13 @@ av-logo" href="#">La ConfidentCiel</a>
 
   // Init pyjama display
   bkUpdatePyjama();
+
+  // Init calendar to current month
+  (function(){
+    var now = new Date();
+    bkCalYear  = now.getFullYear();
+    bkCalMonth = now.getMonth();
+  })();
 
   // Close on backdrop click
   document.getElementById('bkOverlay').addEventListener('click', function(e){
