@@ -122,31 +122,22 @@
       color: var(--gold-pale);
       letter-spacing: 2px;
     }
+    /* Vertical video container for YouTube Shorts */
     .video-wrap {
       position: relative;
-      padding-top: 56.25%;
-      border-radius: 12px;
+      margin: 20px auto 0;
+      border-radius: 14px;
       overflow: hidden;
-      margin-top: 18px;
       border: 1px solid rgba(201,164,32,.35);
       background: var(--galaxy-dark);
+      max-width: 320px;
+      aspect-ratio: 9 / 16;
     }
     .video-wrap iframe {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
       border: 0;
     }
-    .video-placeholder {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      color: var(--gold-light);
-      font-family: 'Poiret One', cursive;
-      letter-spacing: 2px;
-      text-align: center;
-      padding: 20px;
-    }
-    .video-placeholder span { font-size: 2rem; margin-bottom: 8px; }
     .warn {
       background: rgba(122,48,64,.35);
       border-left: 3px solid var(--bordeaux);
@@ -154,6 +145,30 @@
       padding: 12px 16px;
       margin-top: 14px;
       font-size: .95rem;
+    }
+    .rules-list { list-style: none; margin-top: 10px; }
+    .rules-list li {
+      padding: 8px 0 8px 30px;
+      position: relative;
+      font-size: 1rem;
+    }
+    .rules-list li::before {
+      content: attr(data-icon);
+      position: absolute; left: 0;
+      font-size: 1.1rem;
+    }
+    .golden-rule {
+      margin-top: 16px;
+      padding: 14px 18px;
+      background: rgba(201,164,32,.08);
+      border: 1px solid rgba(201,164,32,.4);
+      border-radius: 12px;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      color: var(--gold-light);
+      font-size: 1.05rem;
+      text-align: center;
+      line-height: 1.6;
     }
     .contact-btn {
       display: inline-block;
@@ -198,30 +213,38 @@
   <a href="#arrivee">🔑 Arrivée</a>
   <a href="#wifi">📶 Wifi</a>
   <a href="#jacuzzi">🛁 Jacuzzi</a>
-  <a href="#tv">📺 TV &amp; Karaoké</a>
+  <a href="#sdb">🚿 Salle de bain</a>
+  <a href="#tv">📺 TV &amp; Enceinte</a>
   <a href="#kitchenette">☕ Kitchenette</a>
   <a href="#patio">🌿 Patio</a>
+  <a href="#regles">📋 Règles</a>
   <a href="#depart">🕚 Départ</a>
   <a href="#contact">🆘 Contact</a>
 </nav>
 
 <main>
 
+  <!-- ARRIVÉE -->
   <section id="arrivee">
     <h2>🔑 Arrivée autonome — dès 19h00</h2>
     <ul>
       <li>Adresse : <strong>12 rue Auguste Taravella</strong>, 94500 Champigny-sur-Marne</li>
-      <li>Boîte à clé sécurisée — code et emplacement exact envoyés le jour de votre arrivée</li>
-      <li>Parking gratuit sur place — détails envoyés avant l'arrivée</li>
+      <li>Boîte à clé sécurisée — code : <span class="code-chip" style="font-size:1.25rem;padding:4px 18px;letter-spacing:4px;">2603</span></li>
+      <li>Parking gratuit sur place</li>
       <li>En transports : RER A « Champigny » ou « Joinville-le-Pont » puis bus 108, 110 ou 208, arrêt <strong>Jean-Baptiste Clément</strong> (2 min à pied) · RER E « Les Boullereaux-Champigny » à 15-20 min à pied</li>
       <li>Arrivée anticipée (1h avant) possible sur demande la veille (+50&nbsp;€)</li>
     </ul>
     <div class="video-wrap">
-      <!-- Remplacer par : <iframe src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe> -->
-      <div class="video-placeholder"><span>🎥</span>Vidéo : trouver l'entrée &amp; ouvrir la boîte à clé<br/>(à venir)</div>
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/D3TICVzfWdw?playsinline=1"
+        title="Vidéo : trouver l'entrée et ouvrir la boîte à clé"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
     </div>
   </section>
 
+  <!-- WIFI -->
   <section id="wifi">
     <h2>📶 Wifi haut débit</h2>
     <ul>
@@ -230,6 +253,7 @@
     </ul>
   </section>
 
+  <!-- JACUZZI -->
   <section id="jacuzzi">
     <h2>🛁 Jacuzzi privatif</h2>
     <ul>
@@ -239,22 +263,44 @@
     </ul>
     <div class="warn">⚠️ Douche rapide avant d'entrer · pas de verre au bord du bassin · refermez le capot après usage pour garder la chaleur.</div>
     <div class="video-wrap">
-      <div class="video-placeholder"><span>🎥</span>Vidéo : mode d'emploi du jacuzzi<br/>(à venir)</div>
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/oFRFgnnJkCQ?playsinline=1"
+        title="Vidéo : mode d'emploi du jacuzzi"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
     </div>
   </section>
 
+  <!-- SALLE DE BAIN -->
+  <section id="sdb">
+    <h2>🚿 Salle de bain</h2>
+    <ul>
+      <li>Serviettes de bain et de toilette fournies — voir la vidéo pour leur emplacement</li>
+      <li>Produits de base à disposition : shampoing, gel douche, savon</li>
+      <li>Sèche-cheveux dans le placard de la salle de bain</li>
+    </ul>
+    <div class="video-wrap">
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/158A1NU3d6c?playsinline=1"
+        title="Vidéo : salle de bain"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </section>
+
+  <!-- TV -->
   <section id="tv">
-    <h2>📺 TV pivotante &amp; Karaoké</h2>
+    <h2>📺 TV pivotante &amp; Enceinte Bluetooth</h2>
     <ul>
       <li>Grande TV orientable entre la chambre et le salon</li>
       <li>Netflix, YouTube et applis : compte invité déjà connecté</li>
-      <li>Karaoké : micro et appli prêts à l'emploi — écrivez-moi si besoin d'aide</li>
+      <li>Enceinte Bluetooth : connectez votre téléphone et lancez votre playlist</li>
     </ul>
-    <div class="video-wrap">
-      <div class="video-placeholder"><span>🎥</span>Vidéo : pivoter la TV &amp; lancer le karaoké<br/>(à venir)</div>
-    </div>
   </section>
 
+  <!-- KITCHENETTE -->
   <section id="kitchenette">
     <h2>☕ Kitchenette &amp; Boissons</h2>
     <ul>
@@ -264,6 +310,7 @@
     </ul>
   </section>
 
+  <!-- PATIO -->
   <section id="patio">
     <h2>🌿 Patio privé</h2>
     <ul>
@@ -272,19 +319,40 @@
     </ul>
   </section>
 
+  <!-- RÈGLES -->
+  <section id="regles">
+    <h2>📋 Règles de la maison</h2>
+    <ul class="rules-list">
+      <li data-icon="🚭">Interdit de fumer à l'intérieur du logement</li>
+      <li data-icon="🐾">Animaux non acceptés</li>
+      <li data-icon="👥">Maximum 2 voyageurs</li>
+      <li data-icon="🔇">Volume modéré après 22h par respect pour le voisinage</li>
+    </ul>
+    <div class="golden-rule">
+      « Laissez le logement à votre départ tel que vous l'avez trouvé à votre arrivée — c'est la règle d'or d'un séjour réussi. »
+    </div>
+  </section>
+
+  <!-- DÉPART -->
   <section id="depart">
     <h2>🕚 Départ — avant 11h00</h2>
     <ul>
-      <li>Remettez la clé dans la boîte sécurisée</li>
+      <li>Remettez la clé dans la boîte sécurisée (code <span class="code-chip">2603</span>)</li>
       <li>Éteignez lumières et TV, fermez la porte entre la chambre et le jacuzzi</li>
       <li>Sortez les poubelles si possible — conteneur indiqué sur place 🙏</li>
       <li>Départ tardif jusqu'à 13h possible (+50&nbsp;€) — demandez la veille</li>
     </ul>
     <div class="video-wrap">
-      <div class="video-placeholder"><span>🎥</span>Vidéo : check-list départ en 60 secondes<br/>(à venir)</div>
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/BL_kZ9z0aKw?playsinline=1"
+        title="Vidéo : check-list serviettes et départ"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
     </div>
   </section>
 
+  <!-- CONTACT -->
   <section id="contact">
     <h2>🆘 Besoin d'aide ?</h2>
     <p>Léona répond dans l'heure, 7j/7.</p>
