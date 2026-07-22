@@ -1393,6 +1393,59 @@
   font-size:.78rem; color:var(--gold-light); opacity:.7;
   text-align:center; margin-bottom:1rem; line-height:1.6;
 }
+/* ── Nights stepper (nuitée multi-nuits) ── */
+.bk-night-info {
+  font-size:.88rem; color:var(--gold-light); text-align:center;
+  margin-bottom:.8rem; opacity:.85;
+}
+.bk-night-row {
+  text-align:center; margin-bottom:.8rem;
+}
+.bk-night-label {
+  font-size:.82rem; color:var(--text-muted); letter-spacing:.03em;
+}
+.bk-night-breakdown {
+  margin-top:.9rem;
+  border: 1px solid rgba(201,164,32,.2);
+  border-radius:.85rem;
+  overflow:hidden;
+}
+.bk-night-line {
+  display:flex; justify-content:space-between;
+  padding:.55rem 1rem;
+  font-size:.82rem; color:var(--gold-light);
+  border-bottom:1px solid rgba(201,164,32,.1);
+}
+.bk-night-line:last-child { border-bottom:none; }
+.bk-night-line.total {
+  background:rgba(201,164,32,.08);
+  font-size:.9rem; color:var(--gold);
+  padding:.75rem 1rem;
+}
+/* ── Contact fields (step 4, nuitée) ── */
+.bk-contact-fields {
+  display:flex; flex-direction:column; gap:.7rem;
+  margin-bottom:1.1rem;
+}
+.bk-input {
+  width:100%; padding:.75rem 1rem;
+  background:rgba(255,255,255,.055);
+  border:1.5px solid rgba(201,164,32,.3);
+  border-radius:.75rem;
+  color:var(--gold-pale);
+  font-size:.92rem; font-family:inherit;
+  outline:none; transition:border .2s;
+}
+.bk-input::placeholder { color:rgba(201,164,32,.4); }
+.bk-input:focus { border-color:var(--gold); }
+.bk-pay-note {
+  font-size:.75rem; color:var(--gold-light); opacity:.65;
+  text-align:center; margin-top:.65rem; line-height:1.5;
+}
+#bkPayError {
+  display:none; color:#ff6b6b; font-size:.82rem;
+  text-align:center; margin-top:.5rem;
+}
 @media(max-width:580px){
   .booking-modal { padding:2rem 1.1rem; }
   .bk-day-grid { grid-template-columns:1fr; }
@@ -2611,25 +2664,17 @@ av-logo" href="#">La ConfidentCiel</a>
     <div class="bk-step" id="bks2">
       <!-- Nuit -->
       <div id="bk2-nuit" style="display:none">
-        <p class="bk-step-title">Choisissez votre nuit</p>
-        <div class="bk-day-grid">
-          <div class="bk-day-card" onclick="bkSelectDay(this,170)">
-            <div class="bk-day-label">🌙 Lun · Mar · Mer</div>
-            <div class="bk-day-price">170 €</div>
-          </div>
-          <div class="bk-day-card" onclick="bkSelectDay(this,180)">
-            <div class="bk-day-label">🌙 Jeudi</div>
-            <div class="bk-day-price">180 €</div>
-          </div>
-          <div class="bk-day-card" onclick="bkSelectDay(this,200)">
-            <div class="bk-day-label">🌙 Vendredi · Dimanche</div>
-            <div class="bk-day-price">200 €</div>
-          </div>
-          <div class="bk-day-card" onclick="bkSelectDay(this,240)">
-            <div class="bk-day-label">✨ Samedi · Veille fériée</div>
-            <div class="bk-day-price">240 €</div>
+        <p class="bk-step-title">Votre séjour</p>
+        <div class="bk-night-info" id="bkNightCheckin"></div>
+        <div class="bk-night-row">
+          <div class="bk-night-label">Nombre de nuits</div>
+          <div class="bk-qty-wrap" style="margin-top:.5rem">
+            <button class="bk-qty-btn" onclick="bkNights(-1)">−</button>
+            <div class="bk-qty-val" id="bkNightsVal">1</div>
+            <button class="bk-qty-btn" onclick="bkNights(1)">+</button>
           </div>
         </div>
+        <div id="bkNightBreakdown" class="bk-night-breakdown"></div>
       </div>
       <!-- Journée -->
       <div id="bk2-journee" style="display:none">
@@ -2714,8 +2759,24 @@ av-logo" href="#">La ConfidentCiel</a>
     <div class="bk-step" id="bks4">
       <p class="bk-step-title">Récapitulatif</p>
       <div class="bk-summary-lines" id="bkSummary"></div>
-      <a class="bk-btn-caution" id="bkBtnCaution" href="#" target="_blank">✦ Finaliser ma réservation →</a>
-      <p class="bk-two-steps" style="margin-top:.8rem">🔒 Votre carte sera enregistrée en caution (300 €, non débitée),<br>puis vous serez redirigé vers le paiement de la prestation.</p>
+
+      <!-- Nuit : paiement direct Stripe Checkout -->
+      <div id="bk4-nuit-form" style="display:none">
+        <div class="bk-contact-fields" style="margin-top:1.1rem">
+          <input id="bkName"  type="text"  class="bk-input" placeholder="Votre prénom et nom">
+          <input id="bkEmail" type="email" class="bk-input" placeholder="Votre adresse email">
+        </div>
+        <button id="bkBtnPay" class="bk-btn-caution" onclick="bkPay()">✦ Payer ma réservation →</button>
+        <div id="bkPayError"></div>
+        <p class="bk-pay-note">🔒 Paiement sécurisé par Stripe · Après paiement → enregistrement de la caution (300 €, non débitée)</p>
+      </div>
+
+      <!-- Journée / Pyjama : caution d'abord → lien Stripe -->
+      <div id="bk4-other-form" style="display:none">
+        <a class="bk-btn-caution" id="bkBtnCaution" href="#" target="_blank" style="margin-top:1.1rem;display:block">✦ Finaliser ma réservation →</a>
+        <p class="bk-two-steps" style="margin-top:.8rem">🔒 Votre carte sera enregistrée en caution (300 €, non débitée),<br>puis vous serez redirigé vers le paiement de la prestation.</p>
+      </div>
+
       <div class="bk-nav" style="margin-top:1rem">
         <button class="bk-btn-prev" onclick="bkGoStep(3)">← Modifier</button>
       </div>
@@ -2743,7 +2804,64 @@ av-logo" href="#">La ConfidentCiel</a>
 
   var bk = { offer:null, price:0, dayKey:null, qty:4,
              date:null, dateState:null, _preset:null,
+             nights:1, checkOut:null,
              opts:{romantique:false,anniversaire:false,arrivee:false,depart:false} };
+
+  // ── Tarifs par nuit (lun–dim, 0=dim) ──────────────────────────────────────
+  var NIGHT_RATES = {0:200, 1:170, 2:170, 3:170, 4:180, 5:200, 6:240};
+  // Jours fériés France 2026 et 2027 (pour tarif veille/fériés = 240€)
+  var FERIES = ['2026-01-01','2026-04-06','2026-05-01','2026-05-08',
+                '2026-05-14','2026-05-25','2026-07-14','2026-08-15',
+                '2026-11-01','2026-11-11','2026-12-25',
+                '2027-01-01','2027-03-29','2027-05-01','2027-05-06',
+                '2027-05-08','2027-05-17','2027-07-14','2027-08-15',
+                '2027-11-01','2027-11-11','2027-12-25'];
+
+  function bkNightRate(ymd) {
+    // Jour férié lui-même
+    if (FERIES.indexOf(ymd) >= 0) return 240;
+    // Veille d'un jour férié (le lendemain est férié)
+    var d = new Date(ymd + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + 1);
+    if (FERIES.indexOf(bkYMD(d)) >= 0) return 240;
+    // Sinon tarif selon jour de semaine de la date d'arrivée
+    var orig = new Date(ymd + 'T12:00:00Z');
+    return NIGHT_RATES[orig.getUTCDay()] || 200;
+  }
+
+  function bkCalcStay(checkIn, numNights) {
+    var lines = [], total = 0;
+    var d = new Date(checkIn + 'T12:00:00Z');
+    for (var i = 0; i < numNights; i++) {
+      var ymd = bkYMD(d);
+      var rate = bkNightRate(ymd);
+      lines.push({ date: ymd, rate: rate });
+      total += rate;
+      d.setUTCDate(d.getUTCDate() + 1);
+    }
+    return { lines: lines, total: total, checkOut: bkYMD(d) };
+  }
+
+  window.bkNights = function(delta) {
+    bk.nights = Math.min(14, Math.max(1, bk.nights + delta));
+    bkUpdateNights();
+  };
+
+  function bkUpdateNights() {
+    if (!bk.date) return;
+    var stay = bkCalcStay(bk.date, bk.nights);
+    bk.price    = stay.total;
+    bk.checkOut = stay.checkOut;
+    document.getElementById('bkNightsVal').textContent = bk.nights;
+    document.getElementById('bkNightCheckin').textContent = '📅 Arrivée : ' + bkFormatDate(bk.date);
+    var html = '';
+    stay.lines.forEach(function(n) {
+      html += '<div class="bk-night-line"><span>' + bkFormatDate(n.date) + '</span><span>' + n.rate + ' €</span></div>';
+    });
+    html += '<div class="bk-night-line total"><span>Départ : ' + bkFormatDate(stay.checkOut) + '</span><span><strong>' + stay.total + ' €</strong></span></div>';
+    document.getElementById('bkNightBreakdown').innerHTML = html;
+    document.getElementById('bkn2').disabled = false;
+  }
 
   var PYJAMA_RATES = {3:90,4:85,5:80,6:75,7:75,8:75};
 
@@ -2860,6 +2978,7 @@ av-logo" href="#">La ConfidentCiel</a>
   function bkReset() {
     bk = { offer:null, price:0, dayKey:null, qty:4,
            date:null, dateState:null, _preset:null,
+           nights:1, checkOut:null,
            opts:{romantique:false,anniversaire:false,arrivee:false,depart:false} };
     document.querySelectorAll('.bk-offer-card.sel,.bk-day-card.sel,.bk-opt.sel,.bk-cal-day.selected')
       .forEach(function(e){ e.classList.remove('sel','selected'); });
@@ -2930,6 +3049,7 @@ av-logo" href="#">La ConfidentCiel</a>
       var el=document.getElementById('bk2-'+t);
       if(el) el.style.display = (t===bk.offer)?'':'none';
     });
+    if (bk.offer === 'nuit') bkUpdateNights();
   }
 
   window.bkSelectDay = function(el, price) {
@@ -2961,25 +3081,85 @@ av-logo" href="#">La ConfidentCiel</a>
   function bkBuildSummary() {
     var c = document.getElementById('bkSummary');
     c.innerHTML = '';
-    var offerLabels = {nuit:'Escapade en Amoureux',journee:'Suite & Spa · 3h',pyjama:'Soirée Pyjama Party'};
     var optTotal = 0;
-    if(bk.date) addLine(c, '📅 Date', bkFormatDate(bk.date), '');
-    addLine(c, offerLabels[bk.offer], bk.price+' €', '');
-    if(bk.opts.romantique){ addLine(c,'🌹 Pack Décoration Romantique','+50 €',''); optTotal+=50; }
-    if(bk.opts.anniversaire){ addLine(c,'🎂 Pack Décoration Anniversaire','+50 €',''); optTotal+=50; }
-    if(bk.opts.arrivee){ addLine(c,'⏰ Arrivée anticipée','+50 €',''); optTotal+=50; }
-    if(bk.opts.depart){ addLine(c,'🕐 Départ tardif','+50 €',''); optTotal+=50; }
-    addLine(c,'🔒 Caution','300 € · empreinte carte (non débitée)','muted');
-    addLine(c,'Total prestation',(bk.price+optTotal)+' €','total');
-    // Bouton unique : caution d'abord → redirection automatique vers paiement
-    var offerLabels = {nuit:'Escapade en Amoureux',journee:'Suite & Spa 3h',pyjama:'Soirée Pyjama Party'};
-    var cautionRef = 'LCC' + Date.now();
-    var payUrl = bkGetLink();
-    document.getElementById('bkBtnCaution').href =
-      CAUTION_URL + '/?ref=' + cautionRef +
-      '&offer=' + encodeURIComponent(offerLabels[bk.offer]||'') +
-      '&pay_url=' + encodeURIComponent(payUrl);
+
+    if (bk.offer === 'nuit') {
+      // ── Nuitée : paiement direct Stripe Checkout ──────────────────────
+      if(bk.date)    addLine(c, '📅 Arrivée', bkFormatDate(bk.date), '');
+      if(bk.checkOut) addLine(c, '📅 Départ',  bkFormatDate(bk.checkOut), '');
+      addLine(c, '🌙 ' + bk.nights + ' nuit' + (bk.nights>1?'s':''), bk.price + ' €', '');
+      if(bk.opts.romantique){  addLine(c,'🌹 Pack Décoration Romantique','+50 €',''); optTotal+=50; }
+      if(bk.opts.anniversaire){addLine(c,'🎂 Pack Décoration Anniversaire','+50 €',''); optTotal+=50; }
+      if(bk.opts.arrivee){     addLine(c,'⏰ Arrivée anticipée','+50 €',''); optTotal+=50; }
+      if(bk.opts.depart){      addLine(c,'🕐 Départ tardif','+50 €',''); optTotal+=50; }
+      addLine(c,'🔒 Caution','300 € · empreinte carte (non débitée)','muted');
+      addLine(c,'Total prestation',(bk.price+optTotal)+' €','total');
+      bk._finalPrice = bk.price + optTotal;
+      // Afficher formulaire nuit, cacher autre
+      document.getElementById('bk4-nuit-form').style.display  = '';
+      document.getElementById('bk4-other-form').style.display = 'none';
+      var btn = document.getElementById('bkBtnPay');
+      btn.disabled = false;
+      btn.textContent = '✦ Payer ' + bk._finalPrice + ' € →';
+      document.getElementById('bkPayError').style.display = 'none';
+    } else {
+      // ── Journée / Pyjama : caution d'abord → lien Stripe statique ────
+      var offerLabels = {journee:'Suite & Spa · 3h', pyjama:'Soirée Pyjama Party'};
+      if(bk.date) addLine(c, '📅 Date', bkFormatDate(bk.date), '');
+      addLine(c, offerLabels[bk.offer]||bk.offer, bk.price+' €', '');
+      if(bk.opts.romantique){  addLine(c,'🌹 Pack Décoration Romantique','+50 €',''); optTotal+=50; }
+      if(bk.opts.anniversaire){addLine(c,'🎂 Pack Décoration Anniversaire','+50 €',''); optTotal+=50; }
+      addLine(c,'🔒 Caution','300 € · empreinte carte (non débitée)','muted');
+      addLine(c,'Total prestation',(bk.price+optTotal)+' €','total');
+      // Afficher formulaire autre, cacher nuit
+      document.getElementById('bk4-nuit-form').style.display  = 'none';
+      document.getElementById('bk4-other-form').style.display = '';
+      var cautionRef = 'LCC' + Date.now();
+      var payUrl = bkGetLink();
+      document.getElementById('bkBtnCaution').href =
+        CAUTION_URL + '/?ref=' + cautionRef +
+        '&offer=' + encodeURIComponent(offerLabels[bk.offer]||bk.offer) +
+        '&pay_url=' + encodeURIComponent(payUrl);
+    }
   }
+
+  window.bkPay = function() {
+    var name  = (document.getElementById('bkName').value  || '').trim();
+    var email = (document.getElementById('bkEmail').value || '').trim();
+    var errEl = document.getElementById('bkPayError');
+    if (!name || !email || email.indexOf('@') < 1) {
+      errEl.textContent = 'Merci de renseigner votre nom et votre adresse email.';
+      errEl.style.display = '';
+      return;
+    }
+    var btn = document.getElementById('bkBtnPay');
+    btn.disabled = true;
+    btn.textContent = 'Préparation du paiement…';
+    errEl.style.display = 'none';
+    fetch(CAUTION_URL + '/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        checkIn:     bk.date,
+        checkOut:    bk.checkOut,
+        name:        name,
+        email:       email,
+        totalAmount: bk._finalPrice * 100,
+        nights:      bk.nights
+      })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.error) throw new Error(data.error);
+      window.location.href = data.url;
+    })
+    .catch(function(err){
+      errEl.textContent = 'Erreur : ' + err.message + '. Réessayez ou contactez-nous au 06 50 34 29 17.';
+      errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = '✦ Payer ' + bk._finalPrice + ' € →';
+    });
+  };
 
   function addLine(parent, label, amount, cls) {
     var d = document.createElement('div');
