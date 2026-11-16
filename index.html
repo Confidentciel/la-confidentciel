@@ -2266,7 +2266,7 @@
             Suite &amp; Spa · Créneau 3h
           </h3>
           <p style="font-size:.9rem; color:var(--text-on-dark); line-height:1.75; max-width:520px; margin-bottom:1.25rem;">
-            Une parenthèse intime en pleine journée — 3 heures pour profiter de la suite et du jacuzzi privatif en toute discrétion. Idéal pour une pause bien-être ou un moment complice, sans attendre le soir.
+            Une parenthèse intime en pleine journée — 3 heures, de 14h à 17h, pour profiter de la suite et du jacuzzi privatif en toute discrétion. Idéal pour une pause bien-être ou un moment complice, sans attendre le soir.
           </p>
           <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
             <span style="display:flex; align-items:center; gap:.4rem; font-size:.82rem; color:var(--text-on-dark);">
@@ -2294,7 +2294,7 @@
             animation:floatIcon 4s ease-in-out infinite;
           ">130€</div>
           <div style="font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
-            color:var(--text-muted); margin-bottom:1.25rem;">par créneau · 3 heures</div>
+            color:var(--text-muted); margin-bottom:1.25rem;">par créneau · de 14h à 17h</div>
           <div style="font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); opacity:.8; margin-top:-.6rem; margin-bottom:1.25rem;">7j/7 · tous les jours</div>
           <a class="btn btn-gold btn-journee" href="#" onclick="bkOpen('journee');return false;"
             style="white-space:nowrap; display:block;">Réserver ce créneau →</a>
@@ -3086,7 +3086,7 @@
           <div class="bk-offer-icon">☀️</div>
           <div class="bk-offer-body">
             <div class="bk-offer-name">Suite &amp; Spa · Journée 3h</div>
-            <div class="bk-offer-desc">Créneau privatif · Jacuzzi · Discret · 7j/7</div>
+            <div class="bk-offer-desc">De 14h à 17h · Jacuzzi · Discret · 7j/7</div>
           </div>
           <div class="bk-offer-price">130 €</div>
         </div>
@@ -3127,7 +3127,7 @@
         <div class="bk-offer-card sel" style="cursor:default">
           <div class="bk-offer-icon">☀️</div>
           <div class="bk-offer-body">
-            <div class="bk-offer-name">Créneau privatif 3h</div>
+            <div class="bk-offer-name">Créneau privatif · 14h – 17h</div>
             <div class="bk-offer-desc">Suite + jacuzzi privatif · Arrivée autonome · Nespresso &amp; thé offerts · 7j/7</div>
           </div>
           <div class="bk-offer-price" style="font-size:1.2rem">130 €</div>
@@ -3309,6 +3309,7 @@
   // ── Availability calendar ───────────────────────────────────────────────
   var bkAvailData = null; // null=not loaded, 'loading'=in flight, Set=ready
   var bkDayData = null;   // jours où le créneau Journée (14h-17h) est déjà pris
+  var bkJourneeData = null; // jours avec une Journée réservée : pas d'arrivée anticipée (1h de ménage)
   var bkCalYear, bkCalMonth;
 
   function bkYMD(d) {
@@ -3328,6 +3329,7 @@
         if(data.error) throw new Error(data.error);
         bkAvailData = new Set(data.blocked);
         bkDayData = data.dayBlocked ? new Set(data.dayBlocked) : null;
+        bkJourneeData = data.journee ? new Set(data.journee) : null;
         document.getElementById('bkCalLoading').style.display = 'none';
         document.getElementById('bkCalContent').style.display = '';
         bkCalRender();
@@ -3490,7 +3492,9 @@
     bk.price = 0; bk.dayKey = null;
     document.querySelectorAll('.bk-day-card').forEach(function(c){ c.classList.remove('sel'); });
     // Options visibility
-    document.getElementById('bkopt-arrivee').style.display = (type==='nuit')?'':'none';
+    var noEarly = bkJourneeData instanceof Set && bkJourneeData.has(bk.date);
+    if(noEarly && bk.opts.arrivee){ bk.opts.arrivee = false; document.getElementById('bkopt-arrivee').classList.remove('sel'); }
+    document.getElementById('bkopt-arrivee').style.display = (type==='nuit' && !noEarly)?'':'none';
     document.getElementById('bkopt-depart').style.display = (type==='nuit')?'':'none';
     document.getElementById('bkopt-romantique').style.display = (type==='pyjama')?'none':'';
     if(type==='journee'){ bk.price=130; document.getElementById('bkn2').disabled=false; }
@@ -3558,7 +3562,7 @@
       document.getElementById('bkPayError').style.display = 'none';
     } else {
       // ── Journée / Pyjama : caution d'abord → lien Stripe statique ────
-      var offerLabels = {journee:'Suite & Spa · 3h', pyjama:'Soirée Pyjama Party'};
+      var offerLabels = {journee:'Suite & Spa · 14h-17h', pyjama:'Soirée Pyjama Party'};
       if(bk.date) addLine(c, '📅 Date', bkFormatDate(bk.date), '');
       addLine(c, offerLabels[bk.offer]||bk.offer, bk.price+' €', '');
       if(bk.opts.romantique){  addLine(c,'🌹 Pack Décoration Romantique','+50 €',''); optTotal+=50; }
