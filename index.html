@@ -3308,6 +3308,7 @@
 
   // ── Availability calendar ───────────────────────────────────────────────
   var bkAvailData = null; // null=not loaded, 'loading'=in flight, Set=ready
+  var bkDayData = null;   // jours où le créneau Journée (14h-17h) est déjà pris
   var bkCalYear, bkCalMonth;
 
   function bkYMD(d) {
@@ -3326,6 +3327,7 @@
       .then(function(data){
         if(data.error) throw new Error(data.error);
         bkAvailData = new Set(data.blocked);
+        bkDayData = data.dayBlocked ? new Set(data.dayBlocked) : null;
         document.getElementById('bkCalLoading').style.display = 'none';
         document.getElementById('bkCalContent').style.display = '';
         bkCalRender();
@@ -3338,13 +3340,20 @@
   };
 
   function bkDateAvail(ymd) {
-    // 'avail' = both slots free, 'partial' = journée only, 'blocked' = fully blocked
+    // 'avail' = tout est libre, 'partial' = journée uniquement, 'nightonly' = nuit/soirée uniquement,
+    // 'blocked' = tout est pris. La journée (14h-17h) tient entre un départ (11h/13h) et une arrivée (17h).
     var nuiteeBlocked = bkAvailData instanceof Set && bkAvailData.has(ymd);
-    var d = new Date(ymd + 'T12:00:00Z');
-    d.setUTCDate(d.getUTCDate() - 1);
-    var prevBlocked = bkAvailData instanceof Set && bkAvailData.has(bkYMD(d));
-    if(nuiteeBlocked && prevBlocked) return 'blocked';
+    var dayBlocked;
+    if(bkDayData instanceof Set) {
+      dayBlocked = bkDayData.has(ymd);
+    } else {
+      var d = new Date(ymd + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() - 1);
+      dayBlocked = nuiteeBlocked && bkAvailData instanceof Set && bkAvailData.has(bkYMD(d));
+    }
+    if(nuiteeBlocked && dayBlocked) return 'blocked';
     if(nuiteeBlocked) return 'partial';
+    if(dayBlocked) return 'nightonly';
     return 'avail';
   }
 
@@ -3440,7 +3449,8 @@
       bkShowStep1();
       if(bk._preset) {
         var p = bk._preset; bk._preset = null;
-        if(!(p==='nuit'||p==='pyjama') || bk.dateState !== 'partial') {
+        var presetOk = (p==='nuit'||p==='pyjama') ? bk.dateState !== 'partial' : bk.dateState !== 'nightonly';
+        if(presetOk) {
           bkSelectOffer(p);
           if(p !== 'nuit') { bkGoStep(2); return; }
         }
@@ -3453,14 +3463,16 @@
   function bkShowStep1() {
     // Grey out nuit/pyjama if date only allows journée
     var partial = bk.dateState === 'partial';
+    var nightOnly = bk.dateState === 'nightonly';
     document.getElementById('bkc-nuit').classList.toggle('bk-offer-disabled', partial);
     document.getElementById('bkc-pyjama').classList.toggle('bk-offer-disabled', partial);
+    document.getElementById('bkc-journee').classList.toggle('bk-offer-disabled', nightOnly);
     // Show date badge
     var badge = document.getElementById('bkDateBadge');
     if(bk.date) {
-      badge.textContent = (partial ? '🌤 ' : '✦ ') + bkFormatDate(bk.date) +
-        (partial ? ' — Journée uniquement' : '');
-      badge.className = 'bk-date-badge' + (partial ? ' partial-note' : '');
+      badge.textContent = (partial ? '🌤 ' : nightOnly ? '🌙 ' : '✦ ') + bkFormatDate(bk.date) +
+        (partial ? ' — Journée uniquement' : nightOnly ? ' — Nuit ou soirée uniquement' : '');
+      badge.className = 'bk-date-badge' + ((partial || nightOnly) ? ' partial-note' : '');
       badge.style.display = '';
     } else {
       badge.style.display = 'none';
@@ -3470,6 +3482,7 @@
   window.bkSelectOffer = function(type) {
     // Block nuit/pyjama on partial (journée-only) dates
     if(bk.dateState === 'partial' && (type === 'nuit' || type === 'pyjama')) return;
+    if(bk.dateState === 'nightonly' && type === 'journee') return;
     bk.offer = type;
     document.querySelectorAll('.bk-offer-card').forEach(function(c){ c.classList.remove('sel'); });
     document.getElementById('bkc-'+type).classList.add('sel');
