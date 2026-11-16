@@ -3491,13 +3491,11 @@
     bk.price = 0; bk.dayKey = null;
     document.querySelectorAll('.bk-day-card').forEach(function(c){ c.classList.remove('sel'); });
     // Options visibility
-    // Arrivée anticipée / départ tardif : proposés pour toutes les offres
-    document.getElementById('bkopt-arrivee').style.display = '';
-    document.getElementById('bkopt-depart').style.display = '';
-    document.querySelector('#bkopt-arrivee .bk-opt-desc').textContent =
-      (type==='journee') ? 'Arrivée à 13h00 au lieu de 14h00' : 'Arrivée 1h avant le check-in standard';
-    document.querySelector('#bkopt-depart .bk-opt-desc').textContent =
-      (type==='journee') ? 'Départ à 18h00 au lieu de 17h00' : 'Départ jusqu\'à 13h00 au lieu de 11h00';
+    // Arrivée anticipée / départ tardif : nuit et soirée pyjama (la Journée n'a que les packs déco)
+    var timeOpts = (type !== 'journee');
+    document.getElementById('bkopt-arrivee').style.display = timeOpts ? '' : 'none';
+    document.getElementById('bkopt-depart').style.display = timeOpts ? '' : 'none';
+    if(!timeOpts){ ['arrivee','depart'].forEach(function(k){ bk.opts[k]=false; document.getElementById('bkopt-'+k).classList.remove('sel'); }); }
     document.getElementById('bkopt-romantique').style.display = (type==='pyjama')?'none':'';
     if(type==='pyjama' && bk.opts.romantique){ bk.opts.romantique=false; document.getElementById('bkopt-romantique').classList.remove('sel'); }
     if(type==='journee'){ bk.price=130; document.getElementById('bkn2').disabled=false; }
@@ -3563,8 +3561,23 @@
       btn.disabled = false;
       btn.textContent = '✦ Payer ' + bk._finalPrice + ' € →';
       document.getElementById('bkPayError').style.display = 'none';
+    } else if (bk.offer === 'journee') {
+      // ── Journée : paiement d'abord (prix calculé par le serveur), caution ensuite ────
+      if(bk.date) addLine(c, '📅 Date', bkFormatDate(bk.date), '');
+      addLine(c, '☀️ Suite & Spa · 14h-17h', bk.price + ' €', '');
+      if(bk.opts.romantique){  addLine(c,'🌹 Pack Décoration Romantique','+50 €',''); optTotal+=50; }
+      if(bk.opts.anniversaire){addLine(c,'🎂 Pack Décoration Anniversaire','+50 €',''); optTotal+=50; }
+      addLine(c,'🔒 Caution','200 € · empreinte carte (non débitée)','muted');
+      addLine(c,'Total prestation',(bk.price+optTotal)+' €','total');
+      bk._finalPrice = bk.price + optTotal;
+      document.getElementById('bk4-nuit-form').style.display  = '';
+      document.getElementById('bk4-other-form').style.display = 'none';
+      var btnJ = document.getElementById('bkBtnPay');
+      btnJ.disabled = false;
+      btnJ.textContent = '✦ Payer ' + bk._finalPrice + ' € →';
+      document.getElementById('bkPayError').style.display = 'none';
     } else {
-      // ── Journée / Pyjama : caution d'abord → paiement calculé par le serveur ────
+      // ── Soirée pyjama : caution d'abord → paiement calculé par le serveur ────
       var offerLabels = {journee:'Suite & Spa · 14h-17h', pyjama:'Soirée Pyjama Party'};
       if(bk.date) addLine(c, '📅 Date', bkFormatDate(bk.date), '');
       addLine(c, offerLabels[bk.offer]||bk.offer, bk.price+' €', '');
@@ -3603,10 +3616,17 @@
     btn.disabled = true;
     btn.textContent = 'Préparation du paiement…';
     errEl.style.display = 'none';
-    fetch(CAUTION_URL + '/.netlify/functions/create-checkout', {
+    var isJournee = (bk.offer === 'journee');
+    fetch(CAUTION_URL + '/.netlify/functions/' + (isJournee ? 'create-day-checkout' : 'create-checkout'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: JSON.stringify(isJournee ? {
+        type:    'journee',
+        date:    bk.date,
+        name:    name,
+        email:   email,
+        options: { romantique: !!bk.opts.romantique, anniversaire: !!bk.opts.anniversaire }
+      } : {
         checkIn:     bk.date,
         checkOut:    bk.checkOut,
         name:        name,
