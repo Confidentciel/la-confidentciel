@@ -3309,7 +3309,6 @@
   // ── Availability calendar ───────────────────────────────────────────────
   var bkAvailData = null; // null=not loaded, 'loading'=in flight, Set=ready
   var bkDayData = null;   // jours où le créneau Journée (14h-17h) est déjà pris
-  var bkJourneeData = null; // jours avec une Journée réservée : pas d'arrivée anticipée (1h de ménage)
   var bkCalYear, bkCalMonth;
 
   function bkYMD(d) {
@@ -3329,7 +3328,6 @@
         if(data.error) throw new Error(data.error);
         bkAvailData = new Set(data.blocked);
         bkDayData = data.dayBlocked ? new Set(data.dayBlocked) : null;
-        bkJourneeData = data.journee ? new Set(data.journee) : null;
         document.getElementById('bkCalLoading').style.display = 'none';
         document.getElementById('bkCalContent').style.display = '';
         bkCalRender();
@@ -3343,7 +3341,8 @@
 
   function bkDateAvail(ymd) {
     // 'avail' = tout est libre, 'partial' = journée uniquement, 'nightonly' = nuit/soirée uniquement,
-    // 'blocked' = tout est pris. La journée (14h-17h) tient entre un départ (11h/13h) et une arrivée (17h).
+    // 'blocked' = tout est pris. La journée (14h-17h) n'est fermée que si 2 nuits consécutives sont prises
+    // (ou si elle est déjà vendue) : départ tardif / arrivée anticipée se règlent avec le client.
     var nuiteeBlocked = bkAvailData instanceof Set && bkAvailData.has(ymd);
     var dayBlocked;
     if(bkDayData instanceof Set) {
@@ -3492,9 +3491,7 @@
     bk.price = 0; bk.dayKey = null;
     document.querySelectorAll('.bk-day-card').forEach(function(c){ c.classList.remove('sel'); });
     // Options visibility
-    var noEarly = bkJourneeData instanceof Set && bkJourneeData.has(bk.date);
-    if(noEarly && bk.opts.arrivee){ bk.opts.arrivee = false; document.getElementById('bkopt-arrivee').classList.remove('sel'); }
-    document.getElementById('bkopt-arrivee').style.display = (type==='nuit' && !noEarly)?'':'none';
+    document.getElementById('bkopt-arrivee').style.display = (type==='nuit')?'':'none';
     document.getElementById('bkopt-depart').style.display = (type==='nuit')?'':'none';
     document.getElementById('bkopt-romantique').style.display = (type==='pyjama')?'none':'';
     if(type==='journee'){ bk.price=130; document.getElementById('bkn2').disabled=false; }
