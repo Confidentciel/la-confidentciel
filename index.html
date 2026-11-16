@@ -3491,9 +3491,15 @@
     bk.price = 0; bk.dayKey = null;
     document.querySelectorAll('.bk-day-card').forEach(function(c){ c.classList.remove('sel'); });
     // Options visibility
-    document.getElementById('bkopt-arrivee').style.display = (type==='nuit')?'':'none';
-    document.getElementById('bkopt-depart').style.display = (type==='nuit')?'':'none';
+    // Arrivée anticipée / départ tardif : proposés pour toutes les offres
+    document.getElementById('bkopt-arrivee').style.display = '';
+    document.getElementById('bkopt-depart').style.display = '';
+    document.querySelector('#bkopt-arrivee .bk-opt-desc').textContent =
+      (type==='journee') ? 'Arrivée à 13h00 au lieu de 14h00' : 'Arrivée 1h avant le check-in standard';
+    document.querySelector('#bkopt-depart .bk-opt-desc').textContent =
+      (type==='journee') ? 'Départ à 18h00 au lieu de 17h00' : 'Départ jusqu\'à 13h00 au lieu de 11h00';
     document.getElementById('bkopt-romantique').style.display = (type==='pyjama')?'none':'';
+    if(type==='pyjama' && bk.opts.romantique){ bk.opts.romantique=false; document.getElementById('bkopt-romantique').classList.remove('sel'); }
     if(type==='journee'){ bk.price=130; document.getElementById('bkn2').disabled=false; }
     else if(type==='pyjama'){ bkUpdatePyjama(); document.getElementById('bkn2').disabled=false; }
     else { document.getElementById('bkn2').disabled=true; }
@@ -3558,25 +3564,29 @@
       btn.textContent = '✦ Payer ' + bk._finalPrice + ' € →';
       document.getElementById('bkPayError').style.display = 'none';
     } else {
-      // ── Journée / Pyjama : caution d'abord → lien Stripe statique ────
+      // ── Journée / Pyjama : caution d'abord → paiement calculé par le serveur ────
       var offerLabels = {journee:'Suite & Spa · 14h-17h', pyjama:'Soirée Pyjama Party'};
       if(bk.date) addLine(c, '📅 Date', bkFormatDate(bk.date), '');
       addLine(c, offerLabels[bk.offer]||bk.offer, bk.price+' €', '');
       if(bk.opts.romantique){  addLine(c,'🌹 Pack Décoration Romantique','+50 €',''); optTotal+=50; }
       if(bk.opts.anniversaire){addLine(c,'🎂 Pack Décoration Anniversaire','+50 €',''); optTotal+=50; }
+      if(bk.opts.arrivee){     addLine(c,'⏰ Arrivée anticipée','+50 €',''); optTotal+=50; }
+      if(bk.opts.depart){      addLine(c,'🕐 Départ tardif','+50 €',''); optTotal+=50; }
       addLine(c,'🔒 Caution','200 € · empreinte carte (non débitée)','muted');
       addLine(c,'Total prestation',(bk.price+optTotal)+' €','total');
       // Afficher formulaire autre, cacher nuit
       document.getElementById('bk4-nuit-form').style.display  = 'none';
       document.getElementById('bk4-other-form').style.display = '';
       var cautionRef = 'LCC' + Date.now() + (bk.date ? '-' + bk.date.replace(/-/g,'') : '');
-      var payUrl = bkGetLink() + '?client_reference_id=' + cautionRef;
+      var allowed = (bk.offer === 'pyjama') ? ['anniversaire','arrivee','depart'] : ['romantique','anniversaire','arrivee','depart'];
+      var chosenOpts = allowed.filter(function(k){ return bk.opts[k]; });
       document.getElementById('bkBtnCaution').href =
         CAUTION_URL + '/?ref=' + cautionRef +
         '&offer=' + encodeURIComponent(offerLabels[bk.offer]||bk.offer) +
+        '&type=' + bk.offer +
         (bk.date ? '&date=' + bk.date : '') +
         (bk.offer === 'pyjama' ? '&qty=' + bk.qty : '') +
-        '&pay_url=' + encodeURIComponent(payUrl);
+        (chosenOpts.length ? '&opts=' + chosenOpts.join(',') : '');
     }
   }
 
