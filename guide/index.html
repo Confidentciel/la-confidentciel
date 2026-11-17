@@ -187,6 +187,12 @@
       color: rgba(245,238,204,.6);
     }
     footer a { color: var(--gold-light); }
+    .acces { background: rgba(201,164,32,.08); border: 1px solid rgba(201,164,32,.45); border-radius: 14px; padding: 16px 18px; margin: 4px 0 14px; }
+    .acces p { margin-top: 6px; font-size: .95rem; }
+    .acces-title { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1rem; }
+    .acces .big { font-size: 1.6rem; letter-spacing: 6px; padding: 6px 20px; margin-top: 6px; }
+    .acces .btn { display: inline-block; margin-top: 10px; background: linear-gradient(135deg, var(--gold), #a8871a); color: var(--galaxy-dark); font-weight: 700; text-decoration: none; padding: 9px 20px; border-radius: 999px; }
+    .acces .muted { opacity: .8; font-size: .88rem; }
   </style>
 </head>
 <body>
@@ -227,9 +233,12 @@
   <!-- ARRIVÉE -->
   <section id="arrivee">
     <h2>🔑 Arrivée autonome — dès 19h00</h2>
+    <div id="acces" class="acces">
+      <div class="acces-title">🔒 Adresse et code de la boîte à clé</div>
+      <p><strong>Réservation sur Airbnb :</strong> dans vos instructions d'arrivée, dans l'application Airbnb.</p>
+      <p><strong>Réservation sur laconfidentciel.com :</strong> ouvrez le lien personnel reçu après votre réservation. Le code s'y affiche le jour de votre arrivée.</p>
+    </div>
     <ul>
-      <li>Adresse : <strong>12 rue Auguste Taravella</strong>, 94500 Champigny-sur-Marne</li>
-      <li>Boîte à clé sécurisée — code : <span class="code-chip" style="font-size:1.25rem;padding:4px 18px;letter-spacing:4px;">2603</span></li>
       <li>Parking gratuit sur place</li>
       <li>En transports : RER A « Champigny » ou « Joinville-le-Pont » puis bus 108, 110 ou 208, arrêt <strong>Jean-Baptiste Clément</strong> (2 min à pied) · RER E « Les Boullereaux-Champigny » à 15-20 min à pied</li>
       <li>Arrivée anticipée (1h avant) possible sur demande la veille (+50&nbsp;€)</li>
@@ -325,7 +334,7 @@
     <ul class="rules-list">
       <li data-icon="🚭">Interdit de fumer à l'intérieur du logement</li>
       <li data-icon="🐾">Animaux non acceptés</li>
-      <li data-icon="👥">Maximum 2 voyageurs</li>
+      <li data-icon="👥">Maximum 2 voyageurs · Soirée pyjama : 3 à 8 personnes</li>
       <li data-icon="🔇">Volume modéré après 22h par respect pour le voisinage</li>
     </ul>
     <div class="golden-rule">
@@ -337,7 +346,7 @@
   <section id="depart">
     <h2>🕚 Départ — avant 11h00</h2>
     <ul>
-      <li>Remettez la clé dans la boîte sécurisée (code <span class="code-chip">2603</span>)</li>
+      <li>Remettez la clé dans la boîte sécurisée et brouillez le code</li>
       <li>Éteignez lumières et TV, fermez la porte entre la chambre et le jacuzzi</li>
       <li>Sortez les poubelles si possible — conteneur indiqué sur place 🙏</li>
       <li>Départ tardif jusqu'à 13h possible (+50&nbsp;€) — demandez la veille</li>
@@ -370,5 +379,35 @@
   Très beau séjour chez nous 🌙
 </footer>
 
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var r = q.get('r') || '', s = q.get('s') || '';
+  if (!/^LCC\d{10,}(-\d{8})?$/.test(r) || !/^[A-Za-z0-9_-]{22}$/.test(s)) return;
+  var box = document.getElementById('acces');
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
+  box.innerHTML = '';
+  box.appendChild(el('div', 'acces-title', '🔒 Vos informations d’accès'));
+  var wait = el('p', 'muted', 'Chargement…'); box.appendChild(wait);
+  fetch('https://darling-moxie-bdf66b.netlify.app/.netlify/functions/guide-access?r=' + encodeURIComponent(r) + '&s=' + encodeURIComponent(s))
+    .then(function (res) { return res.json(); })
+    .then(function (d) {
+      box.removeChild(wait);
+      if (d.error) { box.appendChild(el('p', '', d.error)); return; }
+      box.appendChild(el('p', '', (d.name ? 'Bienvenue ' + d.name + ' ✨ · ' : '') + d.offer + ', ' + d.dates));
+      var a = el('p'); a.appendChild(el('strong', '', 'Adresse : ')); a.appendChild(document.createTextNode(d.address)); box.appendChild(a);
+      if (d.code) {
+        var c = el('p'); c.appendChild(el('strong', '', 'Code de la boîte à clé : ')); box.appendChild(c);
+        box.appendChild(el('span', 'code-chip big', d.code));
+        box.appendChild(el('p', 'muted', 'Merci de ne pas partager ce code et de le brouiller après usage.'));
+      }
+      if (d.message) box.appendChild(el('p', d.code ? 'muted' : '', d.message));
+      if (d.cautionUrl && /^https:\/\/darling-moxie-bdf66b\.netlify\.app\//.test(d.cautionUrl)) {
+        var b = el('a', 'btn', 'Enregistrer ma caution'); b.href = d.cautionUrl; box.appendChild(b);
+      }
+    })
+    .catch(function () { wait.textContent = 'Impossible de charger vos informations. Appelez le 06 50 34 29 17.'; });
+})();
+</script>
 </body>
 </html>
