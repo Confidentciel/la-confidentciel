@@ -1754,6 +1754,10 @@
 }
 .bk-input::placeholder { color:rgba(201,164,32,.4); }
 .bk-input:focus { border-color:var(--gold); }
+.bk-cgv { display:flex; gap:.6rem; align-items:flex-start; margin:1rem 0 .2rem; font-size:.8rem; line-height:1.45; color:var(--gold-light); text-align:left; cursor:pointer; }
+.bk-cgv input { margin-top:.18rem; width:18px; height:18px; flex:0 0 18px; accent-color:var(--gold); cursor:pointer; }
+.bk-cgv a { color:var(--gold); text-decoration:underline; }
+.bk-cgv-err { color:#ff8f8f; font-size:.8rem; margin-top:.5rem; text-align:center; }
 .bk-pay-note {
   font-size:.75rem; color:var(--gold-light); opacity:.65;
   text-align:center; margin-top:.65rem; line-height:1.5;
@@ -2760,6 +2764,7 @@
     <a href="#">La ConfidentCiel</a> · Suite Romantique & Soirées Privées · Champigny-sur-Marne, Île-de-France
   </p>
   <p>Réservations via <a href="https://www.airbnb.fr/rooms/1586962587929012343" target="_blank">Airbnb</a> · Note 4,94/5 · Superhôte Léona</p>
+  <p style="margin-top:.5rem;"><a href="/conditions/">Conditions générales</a> · <a href="/conditions/#mentions">Mentions légales</a> · <a href="/conditions/#donnees">Confidentialité</a></p>
 </footer>
 
 <script>
@@ -3223,6 +3228,7 @@
           <input id="bkName"  type="text"  class="bk-input" placeholder="Votre prénom et nom">
           <input id="bkEmail" type="email" class="bk-input" placeholder="Votre adresse email">
         </div>
+        <label class="bk-cgv"><input type="checkbox" id="bkCgv"> <span>J'accepte les <a href="/conditions/" target="_blank" rel="noopener">conditions générales</a> : annulation non remboursable, caution de 200&nbsp;€, règlement intérieur.</span></label>
         <button id="bkBtnPay" class="bk-btn-caution" onclick="bkPay()">✦ Payer ma réservation →</button>
         <div id="bkPayError"></div>
         <p class="bk-pay-note">🔒 Paiement sécurisé par Stripe · Après paiement → enregistrement de la caution (200 €, non débitée)</p>
@@ -3230,7 +3236,9 @@
 
       <!-- Journée / Pyjama : caution d'abord → lien Stripe -->
       <div id="bk4-other-form" style="display:none">
-        <a class="bk-btn-caution" id="bkBtnCaution" href="#" target="_blank" style="margin-top:1.1rem;display:block">✦ Finaliser ma réservation →</a>
+        <label class="bk-cgv"><input type="checkbox" id="bkCgv2"> <span>J'accepte les <a href="/conditions/" target="_blank" rel="noopener">conditions générales</a> : annulation non remboursable, caution de 200&nbsp;€, règlement intérieur.</span></label>
+        <a class="bk-btn-caution" id="bkBtnCaution" href="#" target="_blank" style="margin-top:.6rem;display:block">✦ Finaliser ma réservation →</a>
+        <div id="bkCgvError2" class="bk-cgv-err" style="display:none">Merci d'accepter les conditions générales pour continuer.</div>
         <p class="bk-two-steps" style="margin-top:.8rem">🔒 Votre carte sera enregistrée en caution (200 €, non débitée),<br>puis vous serez redirigé vers le paiement de la prestation.</p>
       </div>
 
@@ -3608,9 +3616,18 @@
         '&type=' + bk.offer +
         (bk.date ? '&date=' + bk.date : '') +
         (bk.offer === 'pyjama' ? '&qty=' + bk.qty : '') +
-        (chosenOpts.length ? '&opts=' + chosenOpts.join(',') : '');
+        (chosenOpts.length ? '&opts=' + chosenOpts.join(',') : '') +
+        '&cgv=' + CGV_VERSION;
     }
   }
+
+  // Conditions générales : version acceptée, envoyée au serveur et enregistrée chez Stripe
+  var CGV_VERSION = '2026-11-17';
+  document.getElementById('bkBtnCaution').addEventListener('click', function (e) {
+    var ok = document.getElementById('bkCgv2').checked;
+    document.getElementById('bkCgvError2').style.display = ok ? 'none' : '';
+    if (!ok) e.preventDefault();
+  });
 
   window.bkPay = function() {
     var name  = (document.getElementById('bkName').value  || '').trim();
@@ -3618,6 +3635,11 @@
     var errEl = document.getElementById('bkPayError');
     if (!name || !email || email.indexOf('@') < 1) {
       errEl.textContent = 'Merci de renseigner votre nom et votre adresse email.';
+      errEl.style.display = '';
+      return;
+    }
+    if (!document.getElementById('bkCgv').checked) {
+      errEl.textContent = 'Merci d\u2019accepter les conditions générales pour continuer.';
       errEl.style.display = '';
       return;
     }
@@ -3634,6 +3656,7 @@
         date:    bk.date,
         name:    name,
         email:   email,
+        cgv:     CGV_VERSION,
         options: { romantique: !!bk.opts.romantique, anniversaire: !!bk.opts.anniversaire }
       } : {
         checkIn:     bk.date,
@@ -3642,6 +3665,7 @@
         email:       email,
         totalAmount: bk._finalPrice * 100,
         nights:      bk.nights,
+        cgv:         CGV_VERSION,
         options:     bk.opts
       })
     })
