@@ -3375,9 +3375,31 @@
     return 'avail';
   }
 
+  // Date et heure actuelles à Paris (quel que soit le fuseau du visiteur)
+  function bkParisNow() {
+    var p = {};
+    new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit',
+      day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+      .formatToParts(new Date()).forEach(function(x){ p[x.type] = x.value; });
+    return { ymd: p.year + '-' + p.month + '-' + p.day, minutes: (+p.hour) * 60 + (+p.minute) };
+  }
+
+  // Réservation le jour même : la Journée (14h-17h) reste réservable jusqu'à 14h,
+  // la nuit / soirée pyjama (arrivée 19h) jusqu'à 19h, tant que le créneau est libre.
+  var BK_DAY_CUTOFF = 14 * 60, BK_NIGHT_CUTOFF = 19 * 60;
+  function bkTodayState(state, minutes) {
+    var dayOpen = minutes < BK_DAY_CUTOFF, nightOpen = minutes < BK_NIGHT_CUTOFF;
+    var canDay = dayOpen && (state === 'avail' || state === 'partial');
+    var canNight = nightOpen && (state === 'avail' || state === 'nightonly');
+    if(canDay && canNight) return 'avail';
+    if(canDay) return 'partial';
+    if(canNight) return 'nightonly';
+    return 'past';
+  }
+
   function bkCalRender() {
-    var now = new Date();
-    var todayYMD = bkYMD(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())));
+    var paris = bkParisNow();
+    var todayYMD = paris.ymd;
     var MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin',
                      'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
     document.getElementById('bkCalMonthLabel').textContent =
@@ -3392,8 +3414,9 @@
     }
     for(var day = 1; day <= daysInMonth; day++) {
       var ymd = bkCalYear + '-' + String(bkCalMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-      var isPast = ymd <= todayYMD;
-      var state = isPast ? 'past' : bkDateAvail(ymd);
+      var state = ymd < todayYMD ? 'past' : bkDateAvail(ymd);
+      if(ymd === todayYMD) state = bkTodayState(state, paris.minutes);
+      var isPast = state === 'past';
       var cell = document.createElement('div');
       cell.className = 'bk-cal-day ' + state;
       if(bk.date === ymd) cell.className += ' selected';
